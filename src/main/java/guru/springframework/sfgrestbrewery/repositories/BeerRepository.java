@@ -1,16 +1,17 @@
 package guru.springframework.sfgrestbrewery.repositories;
 
 
-import guru.springframework.sfgrestbrewery.domain.Beer;
-import guru.springframework.sfgrestbrewery.web.model.BeerStyleEnum;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
-public interface BeerRepository extends JpaRepository<Beer, UUID> {
+import guru.springframework.sfgrestbrewery.domain.Beer;
+import guru.springframework.sfgrestbrewery.web.model.BeerStyleEnum;
+
+
+public interface BeerRepository extends ReactiveCrudRepository<Beer, UUID> {
     Page<Beer> findAllByBeerName(String beerName, Pageable pageable);
 
     Page<Beer> findAllByBeerStyle(BeerStyleEnum beerStyle, Pageable pageable);
