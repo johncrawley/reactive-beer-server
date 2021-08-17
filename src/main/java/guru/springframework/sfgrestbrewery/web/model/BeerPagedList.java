@@ -32,11 +32,13 @@ public class BeerPagedList extends PageImpl<BeerDto> implements Serializable {
 
         super(content, PageRequest.of(number, size), totalElements);
     }
+    
 
     public BeerPagedList(List<BeerDto> content, Pageable pageable, long total) {
         super(content, pageable, total);
     }
 
+    
     public BeerPagedList(List<BeerDto> content) {
         super(content);
     }
