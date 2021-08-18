@@ -11,7 +11,7 @@ import guru.springframework.sfgrestbrewery.domain.Beer;
 import guru.springframework.sfgrestbrewery.web.model.BeerStyleEnum;
 
 
-public interface BeerRepository extends ReactiveCrudRepository<Beer, UUID> {
+public interface BeerRepository extends ReactiveCrudRepository<Beer, Integer> {
 	/*
     Page<Beer> findAllByBeerName(String beerName, Pageable pageable);
 

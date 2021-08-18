@@ -1,8 +1,10 @@
 package guru.springframework.sfgrestbrewery.web.mappers;
 
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
 import guru.springframework.sfgrestbrewery.domain.Beer;
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
-import org.mapstruct.Mapper;
 
 /**
  * Created by jt on 2019-05-25.
@@ -11,6 +13,7 @@ import org.mapstruct.Mapper;
 @Mapper
 public interface BeerMapper {
 
+	@Mapping(target = "quantityOnHand", ignore = true)
     BeerDto beerToBeerDto(Beer beer);
 
     BeerDto beerToBeerDtoWithInventory(Beer beer);

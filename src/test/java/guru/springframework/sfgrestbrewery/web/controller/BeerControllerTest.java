@@ -6,9 +6,7 @@ import static org.mockito.BDDMockito.given;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
-import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +14,14 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import guru.springframework.sfgrestbrewery.bootstrap.BeerLoader;
 import guru.springframework.sfgrestbrewery.services.BeerService;
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
 import guru.springframework.sfgrestbrewery.web.model.BeerPagedList;
+import reactor.core.publisher.Mono;
 
 
 @WebFluxTest(BeerController.class)
@@ -32,6 +32,9 @@ public class BeerControllerTest {
 	
 	@MockBean
 	BeerService beerService;
+	
+	@MockBean
+	ConnectionFactoryInitializer connectionFactoryInitializer;
 	
 	BeerDto validBeer;
 	
@@ -45,10 +48,11 @@ public class BeerControllerTest {
 				.build();
 	}
 	
+	
 	@Test
 	void getBeerById() {
-			UUID beerId = UUID.randomUUID();
-			given(beerService.getById(any(), any())).willReturn(validBeer);
+			Integer beerId = 1;
+			given(beerService.getById(any(), any())).willReturn(Mono.just(validBeer));
 			
 			webTestClient.get()
 			.uri("/api/v1/beer/" + beerId)

@@ -1,22 +1,21 @@
 package guru.springframework.sfgrestbrewery.services;
 
+import java.util.UUID;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
 import guru.springframework.sfgrestbrewery.domain.Beer;
 import guru.springframework.sfgrestbrewery.repositories.BeerRepository;
-import guru.springframework.sfgrestbrewery.web.controller.NotFoundException;
 import guru.springframework.sfgrestbrewery.web.mappers.BeerMapper;
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
 import guru.springframework.sfgrestbrewery.web.model.BeerPagedList;
 import guru.springframework.sfgrestbrewery.web.model.BeerStyleEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import java.util.UUID;
-import java.util.stream.Collectors;
+import reactor.core.publisher.Mono;
 
 /**
  * Created by jt on 2019-04-20.
@@ -77,18 +76,12 @@ public class BeerServiceImpl implements BeerService {
 
     @Cacheable(cacheNames = "beerCache", key = "#beerId", condition = "#showInventoryOnHand == false ")
     @Override
-    public BeerDto getById(UUID beerId, Boolean showInventoryOnHand) {
-    	/*
-        if (showInventoryOnHand) {
-            return beerMapper.beerToBeerDtoWithInventory(
-                    beerRepository.findById(beerId).orElseThrow(NotFoundException::new)
-            );
-        } else {
-            return beerMapper.beerToBeerDto(
-                    beerRepository.findById(beerId).orElseThrow(NotFoundException::new)
-            );
-        } */
-    	return null;
+    public Mono<BeerDto> getById(Integer beerId, Boolean showInventoryOnHand) {
+    	
+    	if(showInventoryOnHand) {
+    		return beerRepository.findById(beerId).map(beerMapper::beerToBeerDtoWithInventory);
+    	}
+    	return beerRepository.findById(beerId).map(beerMapper::beerToBeerDto);
     }
     
 
@@ -102,7 +95,7 @@ public class BeerServiceImpl implements BeerService {
 
     
     @Override
-    public BeerDto updateBeer(UUID beerId, BeerDto beerDto) {
+    public BeerDto updateBeer(Integer beerId, BeerDto beerDto) {
     	/*
         Beer beer = beerRepository.findById(beerId).orElseThrow(NotFoundException::new);
 
@@ -123,7 +116,7 @@ public class BeerServiceImpl implements BeerService {
     }
 
     @Override
-    public void deleteBeerById(UUID beerId) {
+    public void deleteBeerById(Integer beerId) {
         beerRepository.deleteById(beerId);
     }
 }
