@@ -1,10 +1,5 @@
 package guru.springframework.sfgrestbrewery.domain;
 
-import guru.springframework.sfgrestbrewery.web.model.BeerStyleEnum;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 /*
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
@@ -15,7 +10,15 @@ import javax.persistence.*;
 */
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.UUID;
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.Id;
+
+import guru.springframework.sfgrestbrewery.web.model.BeerStyleEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Created by jt on 2019-05-25.
@@ -33,7 +36,8 @@ public class Beer {
     @Type(type="org.hibernate.type.UUIDCharType")
     @Column(length = 36, columnDefinition = "varchar", updatable = false, nullable = false)
    */
-    private UUID id;
+	@Id
+    private Integer id;
 
    // @Version
     private Long version;
@@ -47,8 +51,8 @@ public class Beer {
 
   //  @CreationTimestamp
   //  @Column(updatable = false)
-    private Timestamp createdDate;
+    private LocalDateTime createdDate;
 
    // @UpdateTimestamp
-    private Timestamp lastModifiedDate;
+    private LocalDateTime lastModifiedDate;
 }

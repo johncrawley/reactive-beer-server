@@ -27,6 +27,7 @@
     <properties>
         <java.version>11</java.version>
         <mapstruct.version>1.4.2.Final</mapstruct.version>
+        <m2e.apt.activation>jdt_apt</m2e.apt.activation>
         <org.lombok.version>1.18.18</org.lombok.version>
         <!--set this to your docker acct name-->
         <docker.image.prefix>sfgbeerworks</docker.image.prefix>
@@ -89,7 +90,7 @@
         </dependency>
     </dependencies>
 
-    <build>
+    <build>					
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -110,7 +111,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <!--   <version>3.8.0</version> -->
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
