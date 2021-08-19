@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import guru.springframework.sfgrestbrewery.bootstrap.BeerLoader;
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
 import guru.springframework.sfgrestbrewery.web.model.BeerPagedList;
 import reactor.core.publisher.Mono;
@@ -55,6 +56,28 @@ public class WebClientIT{
     	countDownLatch.await(1000, TimeUnit.MILLISECONDS);
     	assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
+    
+    
+    @Test
+    void getBeerByUpc() throws InterruptedException {
+    	
+    	CountDownLatch countDownLatch = new CountDownLatch(1);
+    	Mono<BeerDto> beerDtoMono = webClient.get().uri("api/v1/beerUpc/" + BeerLoader.BEER_10_UPC)
+    			.accept(MediaType.APPLICATION_JSON)
+    			.retrieve().bodyToMono(BeerDto.class);
+    	
+    	beerDtoMono.subscribe(beer -> {
+    		assertThat(beer).isNotNull();
+    		assertThat(beer.getBeerName()).isNotNull();
+    		countDownLatch.countDown();
+    	});
+    	
+    	countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+    	assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+    
+    
+    
     
 
     @Test

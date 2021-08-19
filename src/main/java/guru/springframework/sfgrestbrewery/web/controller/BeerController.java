@@ -73,8 +73,7 @@ public class BeerController {
     
     @GetMapping("beerUpc/{upc}")
     public ResponseEntity<Mono<BeerDto>> getBeerByUpc(@PathVariable("upc") String upc){
-       // return new ResponseEntity<>(beerService.getByUpc(upc), HttpStatus.OK);
-    	return ResponseEntity.ok(Mono.just(beerService.getByUpc(upc)));
+    	return ResponseEntity.ok(beerService.getByUpc(upc));
     }
     
 

@@ -1,7 +1,5 @@
 package guru.springframework.sfgrestbrewery.services;
 
-import java.util.UUID;
-
 import org.springframework.data.domain.PageRequest;
 
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
@@ -21,7 +19,7 @@ public interface BeerService {
 
     BeerDto updateBeer(Integer beerId, BeerDto beerDto);
 
-    BeerDto getByUpc(String upc);
+    Mono<BeerDto> getByUpc(String upc);
 
     void deleteBeerById(Integer beerId);
 }

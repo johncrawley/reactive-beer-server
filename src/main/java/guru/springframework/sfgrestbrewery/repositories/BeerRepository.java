@@ -1,14 +1,10 @@
 package guru.springframework.sfgrestbrewery.repositories;
 
 
-import java.util.UUID;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 import guru.springframework.sfgrestbrewery.domain.Beer;
-import guru.springframework.sfgrestbrewery.web.model.BeerStyleEnum;
+import reactor.core.publisher.Mono;
 
 
 public interface BeerRepository extends ReactiveCrudRepository<Beer, Integer> {
@@ -19,5 +15,5 @@ public interface BeerRepository extends ReactiveCrudRepository<Beer, Integer> {
 
     Page<Beer> findAllByBeerNameAndBeerStyle(String beerName, BeerStyleEnum beerStyle, Pageable pageable);
 */
-    Beer findByUpc(String upc);
+    Mono<Beer> findByUpc(String upc);
 }
