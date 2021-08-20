@@ -1,10 +1,15 @@
 package guru.springframework.sfgrestbrewery.services;
 
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Query;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.empty;
+import static org.springframework.data.relational.core.query.Query.query;
 import org.springframework.stereotype.Service;
 
 import guru.springframework.sfgrestbrewery.domain.Beer;
@@ -26,51 +31,40 @@ import reactor.core.publisher.Mono;
 public class BeerServiceImpl implements BeerService {
     private final BeerRepository beerRepository;
     private final BeerMapper beerMapper;
+    private final R2dbcEntityTemplate template;
+    
+    private boolean isBeerStyleEmpty(BeerStyleEnum beerStyle) {
+    	return true;
+    }
 
     @Cacheable(cacheNames = "beerListCache", condition = "#showInventoryOnHand == false ")
     @Override
-    public BeerPagedList listBeers(String beerName, BeerStyleEnum beerStyle, PageRequest pageRequest, Boolean showInventoryOnHand) {
+    public Mono<BeerPagedList> listBeers(String beerName, BeerStyleEnum beerStyle, PageRequest pageRequest, Boolean showInventoryOnHand) {
 
         BeerPagedList beerPagedList = null;
         Page<Beer> beerPage;
-
-        /*
-        if (!beerName.isEmpty() && !StringUtils.isEmpty(beerStyle)) {
-            //search both
-            beerPage = beerRepository.findAllByBeerNameAndBeerStyle(beerName, beerStyle, pageRequest);
-        } else if (!beerName.isEmpty() && StringUtils.isEmpty(beerStyle)) {
-            //search beer_service name
-            beerPage = beerRepository.findAllByBeerName(beerName, pageRequest);
-        } else if (beerName.isEmpty() && !StringUtils.isEmpty(beerStyle)) {
-            //search beer_service style
-            beerPage = beerRepository.findAllByBeerStyle(beerStyle, pageRequest);
-        } else {
-            beerPage = beerRepository.findAll(pageRequest);
+        
+        Query query = null;
+        if(!beerName.isEmpty() && !isBeerStyleEmpty(beerStyle)) {
+        	query = query(where("beerName").is(beerName).and("beerStyle").is(beerStyle));
         }
-
-        if (showInventoryOnHand){
-            beerPagedList = new BeerPagedList(beerPage
-                    .getContent()
-                    .stream()
-                    .map(beerMapper::beerToBeerDtoWithInventory)
-                    .collect(Collectors.toList()),
-                    PageRequest
-                            .of(beerPage.getPageable().getPageNumber(),
-                                    beerPage.getPageable().getPageSize()),
-                    beerPage.getTotalElements());
-        } else {
-            beerPagedList = new BeerPagedList(beerPage
-                    .getContent()
-                    .stream()
-                    .map(beerMapper::beerToBeerDto)
-                    .collect(Collectors.toList()),
-                    PageRequest
-                            .of(beerPage.getPageable().getPageNumber(),
-                                    beerPage.getPageable().getPageSize()),
-                    beerPage.getTotalElements());
+        else if(!isBeerStyleEmpty(beerStyle)) {
+        	query = query(where("beerStyle").is(beerStyle));
         }
-	*/
-        return beerPagedList;
+        else if(!beerName.isEmpty()) {
+        	query = query(where("beerName").is(beerName));
+        }
+        else {
+        	query = empty();
+        }
+        return template.select(Beer.class)
+        		.matching(query.with(pageRequest))
+        		.all()
+        		.map(beerMapper::beerToBeerDto)
+        		.collect(Collectors.toList())
+        		.map(beers -> {
+        			return new BeerPagedList(beers, PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize()), beers.size());
+        		});
     }
     
 
