@@ -43,6 +43,7 @@ public class BeerServiceImpl implements BeerService {
 
         BeerPagedList beerPagedList = null;
         Page<Beer> beerPage;
+        beerName = beerName == null ? "" : beerName;
         
         Query query = null;
         if(!beerName.isEmpty() && !isBeerStyleEmpty(beerStyle)) {
@@ -63,7 +64,10 @@ public class BeerServiceImpl implements BeerService {
         		.map(beerMapper::beerToBeerDto)
         		.collect(Collectors.toList())
         		.map(beers -> {
-        			return new BeerPagedList(beers, PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize()), beers.size());
+        			return new BeerPagedList(beers, PageRequest.of(
+        					pageRequest.getPageNumber(), 
+        					pageRequest.getPageSize()), 
+        					beers.size());
         		});
     }
     

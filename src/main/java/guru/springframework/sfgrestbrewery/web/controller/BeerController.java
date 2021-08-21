@@ -38,11 +38,12 @@ public class BeerController {
     private final BeerService beerService;
 
     @GetMapping(produces = { "application/json" }, path = "beer")
-    public ResponseEntity<Mono<BeerPagedList>> listBeers(@RequestParam(value = "pageNumber", required = false) Integer pageNumber,
-                                                   @RequestParam(value = "pageSize", required = false) Integer pageSize,
-                                                   @RequestParam(value = "beerName", required = false) String beerName,
-                                                   @RequestParam(value = "beerStyle", required = false) BeerStyleEnum beerStyle,
-                                                   @RequestParam(value = "showInventoryOnHand", required = false) Boolean showInventoryOnHand){
+    public ResponseEntity<Mono<BeerPagedList>> listBeers(
+    		@RequestParam(value = "pageNumber", required = false) Integer pageNumber,
+           @RequestParam(value = "pageSize", required = false) Integer pageSize,
+           @RequestParam(value = "beerName", required = false) String beerName,
+           @RequestParam(value = "beerStyle", required = false) BeerStyleEnum beerStyle,
+           @RequestParam(value = "showInventoryOnHand", required = false) Boolean showInventoryOnHand){
 
         if (showInventoryOnHand == null) {
             showInventoryOnHand = false;
@@ -56,7 +57,7 @@ public class BeerController {
             pageSize = DEFAULT_PAGE_SIZE;
         }
 
-        return ResponseEntity.ok(Mono.just(beerService.listBeers(beerName, beerStyle, PageRequest.of(pageNumber, pageSize), showInventoryOnHand)));
+        return ResponseEntity.ok(beerService.listBeers(beerName, beerStyle, PageRequest.of(pageNumber, pageSize), showInventoryOnHand));
     }
 
     
