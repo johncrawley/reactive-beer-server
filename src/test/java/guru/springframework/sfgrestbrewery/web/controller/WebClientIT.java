@@ -132,6 +132,47 @@ public class WebClientIT{
     }
     
     
+    @Test
+    void updateBeer() throws InterruptedException {
+    	countDownLatch = new CountDownLatch(3);
+    	
+    	webClient.get().uri(V1_API)
+    		.accept(MediaType.APPLICATION_JSON)
+    		.retrieve()
+    		.bodyToMono(BeerPagedList.class)
+    		.publishOn(Schedulers.single())
+    		.subscribe( pagedList -> {
+    			countDownLatch.countDown();
+    			BeerDto beerDto = pagedList.getContent().get(0);
+    			
+    			String updatedBeerName = "updatedBeer";
+    			BeerDto updatedBeer = BeerDto.builder()
+    					.beerName(updatedBeerName)
+    					.beerStyle(beerDto.getBeerStyle())
+    					.upc(beerDto.getUpc())
+    					.price(beerDto.getPrice())
+    					.build();
+    			
+    			webClient.put().uri(V1_API_SLASH + beerDto.getId())
+    			.contentType(MediaType.APPLICATION_JSON)
+    			.body(BodyInserters.fromValue(updatedBeer))
+    			.retrieve()
+    			.toBodilessEntity()
+    			.flatMap(responseEntity -> {
+    				countDownLatch.countDown();
+    				return webClient.get().uri(V1_API_SLASH + beerDto.getId())
+    						.accept(MediaType.APPLICATION_JSON)
+    						.retrieve()
+    						.bodyToMono(BeerDto.class);
+    			}).subscribe( savedDto -> {
+    				assertThat(savedDto.getBeerName()).isEqualTo(updatedBeerName);
+    				countDownLatch.countDown();
+    			});
+    		});
+    	countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+    	assertThat(countDownLatch.getCount()).isEqualTo(0);
+    	
+    }
     
 }
 
