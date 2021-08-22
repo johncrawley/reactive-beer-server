@@ -1,9 +1,9 @@
 package guru.springframework.sfgrestbrewery.web.controller;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -80,10 +80,16 @@ public class BeerController {
 
     @PostMapping(path = "beer")
     public ResponseEntity saveNewBeer(@RequestBody @Validated BeerDto beerDto){
-        BeerDto savedBeer = beerService.saveNewBeer(beerDto);
+    	
+    	AtomicInteger atomicIntegerBeerId = new AtomicInteger();
+    	
+    	beerService.saveNewBeer(beerDto).subscribe(savedBeerDto -> {
+    		atomicIntegerBeerId.set(savedBeerDto.getId());
+    	});
+    	        
         return ResponseEntity
                 .created(UriComponentsBuilder
-                        .fromHttpUrl("http://api.springframework.guru/api/v1/beer/" + savedBeer.getId().toString())
+                        .fromHttpUrl("http://api.springframework.guru/api/v1/beer/" + atomicIntegerBeerId.get())
                         .build().toUri())
                 .build();
     }

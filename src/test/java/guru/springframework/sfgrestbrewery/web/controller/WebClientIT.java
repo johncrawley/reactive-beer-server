@@ -2,6 +2,7 @@ package guru.springframework.sfgrestbrewery.web.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -10,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import guru.springframework.sfgrestbrewery.bootstrap.BeerLoader;
@@ -29,6 +32,9 @@ public class WebClientIT{
     public static final String BASE_URL = "http://localhost:8080";
 
     WebClient webClient;
+    CountDownLatch countDownLatch;
+    private final String V1_API = "api/v1/beer";
+    private final String V1_API_SLASH = V1_API + "/";
 
     @BeforeEach
     void setUp() {
@@ -36,13 +42,14 @@ public class WebClientIT{
                 .baseUrl(BASE_URL)
                 .clientConnector(new ReactorClientHttpConnector(HttpClient.create().wiretap(true)))
                 .build();
+
+        countDownLatch = new CountDownLatch(1);
     }
     
     
     @Test
     void getBeerById() throws InterruptedException {
-    	
-    	CountDownLatch countDownLatch = new CountDownLatch(1);
+
     	Mono<BeerDto> beerDtoMono = webClient.get().uri("api/v1/beer/1")
     			.accept(MediaType.APPLICATION_JSON)
     			.retrieve().bodyToMono(BeerDto.class);
@@ -61,7 +68,6 @@ public class WebClientIT{
     @Test
     void getBeerByUpc() throws InterruptedException {
     	
-    	CountDownLatch countDownLatch = new CountDownLatch(1);
     	Mono<BeerDto> beerDtoMono = webClient.get().uri("api/v1/beerUpc/" + BeerLoader.BEER_10_UPC)
     			.accept(MediaType.APPLICATION_JSON)
     			.retrieve().bodyToMono(BeerDto.class);
@@ -83,8 +89,6 @@ public class WebClientIT{
     @Test
     void testListBeers() throws InterruptedException {
 
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
         Mono<BeerPagedList> beerPagedListMono = webClient.get().uri("/api/v1/beer")
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(BeerPagedList.class);
@@ -101,4 +105,33 @@ public class WebClientIT{
 
         countDownLatch.await();
     }
+    
+    @Test
+    void testSaveNewBeer() throws InterruptedException{
+    	
+    	BeerDto beerDto = BeerDto.builder()
+    			.beerName("Test Beer")
+    			.upc("1234555")
+    			.beerStyle("PALE_ALE")
+    			.price(new BigDecimal("8.99"))
+    			.build();	
+    	
+    	Mono<ResponseEntity<Void>> beerResponseMono = webClient.post().uri("/api/v1/beer")
+    			.accept(MediaType.APPLICATION_JSON)
+    			.body(BodyInserters.fromValue(beerDto))
+    			.retrieve()
+    			.toBodilessEntity();
+    	
+    		beerResponseMono.publishOn(Schedulers.parallel()).subscribe(responseEntity ->{
+    			assertThat(responseEntity.getStatusCode().is2xxSuccessful());
+    			countDownLatch.countDown();
+    		});
+    		
+    		countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+    		assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+    
+    
+    
 }
+
