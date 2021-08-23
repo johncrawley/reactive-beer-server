@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,6 +60,12 @@ public class BeerController {
 
         return ResponseEntity.ok(beerService.listBeers(beerName, beerStyle, PageRequest.of(pageNumber, pageSize), showInventoryOnHand));
     }
+    
+    
+    @ExceptionHandler
+    ResponseEntity<Void> handleNotFound(NotFoundException ex){
+    	return ResponseEntity.notFound().build();
+    }
 
     
     @GetMapping("beer/{beerId}")
@@ -67,8 +74,14 @@ public class BeerController {
         if (showInventoryOnHand == null) {
             showInventoryOnHand = false;
         }
-        //return new ResponseEntity<>(beerService.getById(beerId, showInventoryOnHand), HttpStatus.OK);
-        return ResponseEntity.ok(beerService.getById(beerId,  showInventoryOnHand));
+
+        return ResponseEntity.ok(beerService.getById(beerId,  showInventoryOnHand)
+        		.defaultIfEmpty(BeerDto.builder().build())
+        		.doOnNext(beerDto -> {
+        			if(beerDto.getId() == null) {
+        				throw new NotFoundException();
+        			}
+        		}));
     }
 
     

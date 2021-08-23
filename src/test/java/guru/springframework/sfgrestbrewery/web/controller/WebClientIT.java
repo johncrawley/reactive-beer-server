@@ -85,9 +85,6 @@ public class WebClientIT{
     }
     
     
-    
-    
-
     @Test
     void testListBeers() throws InterruptedException {
 
@@ -95,18 +92,16 @@ public class WebClientIT{
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(BeerPagedList.class);
 
-
-//        BeerPagedList pagedList = beerPagedListMono.block();
-//        pagedList.getContent().forEach(beerDto -> System.out.println(beerDto.toString()));
         beerPagedListMono.publishOn(Schedulers.parallel()).subscribe(beerPagedList -> {
 
             beerPagedList.getContent().forEach(beerDto -> System.out.println(beerDto.toString()));
 
             countDownLatch.countDown();
         });
-
-        countDownLatch.await();
+    	countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+    	assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
+    
     
     @Test
     void testSaveNewBeer() throws InterruptedException{
@@ -177,7 +172,6 @@ public class WebClientIT{
     }
     
     
-    
     @Test
     void updateBeerNotFound() throws InterruptedException {
     	countDownLatch = new CountDownLatch(2);
@@ -216,7 +210,38 @@ public class WebClientIT{
     	countDownLatch.await(1000, TimeUnit.MILLISECONDS);
     	assertThat(countDownLatch.getCount()).isEqualTo(0);
 	}
+    
   
+    @Test
+    void deleteBeer() throws InterruptedException{
+    	
+    	countDownLatch = new CountDownLatch(3);
+    	webClient.get().uri(V1_API)
+    		.accept(MediaType.APPLICATION_JSON)
+    		.retrieve()
+    		.bodyToMono(BeerPagedList.class)
+    		.publishOn(Schedulers.single())
+    		.subscribe( pagedList -> {
+    			countDownLatch.countDown();
+    			BeerDto beerDto = pagedList.getContent().get(0);
+    			webClient.delete().uri(V1_API_SLASH + beerDto.getId())
+    				.retrieve()
+    				.toBodilessEntity()
+    				.flatMap(responseEntity -> {
+    					countDownLatch.countDown();
+    					return webClient.get().uri(V1_API_SLASH + beerDto.getId())
+    							.accept(MediaType.APPLICATION_JSON)
+    							.retrieve()
+    							.bodyToMono(BeerDto.class);
+    				}).subscribe( savedDto -> {
+    					
+    				}, throwable -> {
+    					countDownLatch.countDown();
+    				});
+    		});
+    		countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+    		assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
     
 }
 
