@@ -1,6 +1,6 @@
 package guru.springframework.sfgrestbrewery.web.controller;
 
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.data.domain.PageRequest;
@@ -97,9 +97,16 @@ public class BeerController {
     
     @PutMapping("beer/{beerId}")
     public ResponseEntity<Void> updateBeerById(@PathVariable("beerId") Integer beerId, @RequestBody @Validated BeerDto beerDto){
+    	AtomicBoolean hasUpdateFailed = new AtomicBoolean(false);
     	
-    	beerService.updateBeer(beerId,  beerDto).subscribe();
-    	return ResponseEntity.noContent().build();
+    	beerService.updateBeer(beerId, beerDto).subscribe(
+    			savedDto -> {
+    				hasUpdateFailed.set(savedDto.getId() == null);
+    			});
+    	
+    	return hasUpdateFailed.get() ?
+    			ResponseEntity.notFound().build() 
+    			: ResponseEntity.noContent().build();
     }
 
     

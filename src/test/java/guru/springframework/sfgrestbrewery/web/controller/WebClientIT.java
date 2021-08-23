@@ -10,11 +10,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import guru.springframework.sfgrestbrewery.bootstrap.BeerLoader;
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
@@ -173,6 +175,48 @@ public class WebClientIT{
     	assertThat(countDownLatch.getCount()).isEqualTo(0);
     	
     }
+    
+    
+    
+    @Test
+    void updateBeerNotFound() throws InterruptedException {
+    	countDownLatch = new CountDownLatch(2);
+    	
+		BeerDto updatedBeer = BeerDto.builder()
+				.beerName("updatedBeer")
+				.beerStyle("ALE")
+				.upc("123123123")
+				.price(new BigDecimal("3.99"))
+				.build();
+		
+		int badId = -1000;
+		
+		webClient.put().uri(V1_API_SLASH + badId)
+		.contentType(MediaType.APPLICATION_JSON)
+		.body(BodyInserters.fromValue(updatedBeer))
+		.retrieve()
+		.toBodilessEntity()
+		.subscribe( responseEntity -> {}, throwable ->{
+			String throwableClass = throwable.getClass().getName();
+			
+			if(throwableClass.equals("org.springframework.web.reactive.function.client.WebClientResponseException$NotFound")){
+					WebClientResponseException ex = (WebClientResponseException) throwable;
+				if(ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+					countDownLatch.countDown();
+				}
+				else {
+					System.out.println("status code:  " + ex.getStatusCode().toString());
+				}
+			}
+			else {
+				System.out.println("throwableClass :"  + throwableClass);
+			}
+		});
+		countDownLatch.countDown();		
+    	countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+    	assertThat(countDownLatch.getCount()).isEqualTo(0);
+	}
+  
     
 }
 
