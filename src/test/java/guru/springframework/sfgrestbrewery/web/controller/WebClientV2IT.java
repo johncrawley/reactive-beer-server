@@ -8,10 +8,14 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import guru.springframework.sfgrestbrewery.bootstrap.BeerLoader;
+import guru.springframework.sfgrestbrewery.web.functional.BeerRouterConfig;
 import guru.springframework.sfgrestbrewery.web.model.BeerDto;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -59,13 +63,52 @@ public class WebClientV2IT {
 				.retrieve()
 				.bodyToMono(BeerDto.class);
 		
-		
 		beerDtoMono.subscribe(beer -> {
 		}, throwable -> {
 			countDownLatch.countDown();
 		});
 		assertCountDown();
 	}
+	
+	
+	@Test
+	void getBeerByUpc() throws InterruptedException {
+		countDownLatch = new CountDownLatch(1);
+		String validUpc = BeerLoader.BEER_10_UPC;
+		Mono<BeerDto> beerDtoMono = webClient.get().uri(BeerRouterConfig.BEER_V2_URL_UPC + validUpc )
+				.accept(MediaType.APPLICATION_JSON)
+				.retrieve()
+				.bodyToMono(BeerDto.class);
+		
+		beerDtoMono.subscribe(beer -> {
+			assertThat(beer).isNotNull();
+			assertThat(beer.getBeerName()).isNotNull();
+			countDownLatch.countDown();
+		});
+		assertCountDown();
+	}
+	
+	
+	@Test
+	void getBeerByUpcNotFound() throws InterruptedException {
+		countDownLatch = new CountDownLatch(1);
+		String badUpc = "-123123123";
+		Mono<BeerDto> beerDtoMono = webClient.get().uri(BeerRouterConfig.BEER_V2_URL_UPC + badUpc )
+				.accept(MediaType.APPLICATION_JSON)
+				.retrieve()
+				.bodyToMono(BeerDto.class);
+		beerDtoMono.subscribe(beer -> {
+		}, throwable -> {
+			if(throwable.getClass().getName().equals("org.springframework.web.reactive.function.client.WebClientResponseException$NotFound")){	
+				WebClientResponseException ex = (WebClientResponseException) throwable;
+				if(ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+				countDownLatch.countDown();
+			}
+		}
+		});
+		assertCountDown();
+	}
+	
 	
 	
 	private void assertCountDown() throws InterruptedException{
