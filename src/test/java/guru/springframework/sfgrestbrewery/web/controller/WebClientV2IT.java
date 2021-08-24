@@ -2,6 +2,7 @@ package guru.springframework.sfgrestbrewery.web.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -10,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -109,6 +112,55 @@ public class WebClientV2IT {
 		assertCountDown();
 	}
 	
+	
+	@Test
+	void saveBeer() throws InterruptedException {
+		countDownLatch = new CountDownLatch(1);
+    	BeerDto beerDto = BeerDto.builder()
+    			.beerName("Test Beer")
+    			.upc("1234555")
+    			.beerStyle("PALE_ALE")
+    			.price(new BigDecimal("8.99"))
+    			.build();	
+		
+		String badUpc = "-123123123";
+		Mono<ResponseEntity<Void>> beerResponseMono = webClient.post().uri(BeerRouterConfig.BEER_V2_URL )
+				.accept(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromValue(beerDto))
+				.retrieve()
+				.toBodilessEntity();
+		
+		beerResponseMono.subscribe(response -> {
+			assertThat(response.getStatusCode().is2xxSuccessful());
+			countDownLatch.countDown();
+		});
+		assertCountDown();
+	}
+	
+	
+	@Test
+	void saveBeerBadRequest() throws InterruptedException {
+		countDownLatch = new CountDownLatch(1);
+    	BeerDto beerDto = BeerDto.builder()
+    			.beerName("Test Beer")
+    			.upc("1234555")
+    			.build();	
+		
+		String badUpc = "-123123123";
+		Mono<ResponseEntity<Void>> beerResponseMono = webClient.post().uri(BeerRouterConfig.BEER_V2_URL )
+				.accept(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromValue(beerDto))
+				.retrieve()
+				.toBodilessEntity();
+		
+		beerResponseMono.subscribe(response -> {}, throwable -> {
+			if(throwable.getClass().getName().equals("org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest")){
+				
+				countDownLatch.countDown();
+			}
+		});
+		assertCountDown();
+	}
 	
 	
 	private void assertCountDown() throws InterruptedException{

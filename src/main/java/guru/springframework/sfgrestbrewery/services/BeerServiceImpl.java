@@ -1,5 +1,9 @@
 package guru.springframework.sfgrestbrewery.services;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.empty;
+import static org.springframework.data.relational.core.query.Query.query;
+
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.Cacheable;
@@ -7,9 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Query;
-import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.Query.empty;
-import static org.springframework.data.relational.core.query.Query.query;
 import org.springframework.stereotype.Service;
 
 import guru.springframework.sfgrestbrewery.domain.Beer;
@@ -86,7 +87,16 @@ public class BeerServiceImpl implements BeerService {
     @Override
     public Mono<BeerDto> saveNewBeer(BeerDto beerDto) {
     	
-    	return beerRepository.save(beerMapper.beerDtoToBeer(beerDto)).map(beerMapper::beerToBeerDto);
+    	return beerRepository.save(beerMapper.beerDtoToBeer(beerDto))
+    			.map(beerMapper::beerToBeerDto);
+    }
+
+
+    @Override
+    public Mono<BeerDto> saveNewBeerMono(Mono<BeerDto> beerDto) {
+    	return beerDto.map(beerMapper::beerDtoToBeer)
+    			.flatMap(beerRepository::save)
+    			.map(beerMapper::beerToBeerDto);
     }
 
     
