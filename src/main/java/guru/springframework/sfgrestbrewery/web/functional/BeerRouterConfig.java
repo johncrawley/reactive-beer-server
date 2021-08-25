@@ -28,6 +28,7 @@ public class BeerRouterConfig {
 				.GET(BEER_V2_URL_ID_TEMPLATE, acceptJson, handler::getBeerById)
 				.GET(BEER_V2_URL_UPC_TEMPLATE, acceptJson, handler::getBeerByUpc)
 				.POST(BEER_V2_URL, acceptJson, handler::saveNewBeer)
+				.PUT(BEER_V2_URL_ID_TEMPLATE, acceptJson, handler::updateBeer)
 						
 				.build();
 	}

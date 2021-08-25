@@ -163,6 +163,78 @@ public class WebClientV2IT {
 	}
 	
 	
+	@Test
+	void updateBeer() throws InterruptedException {
+		countDownLatch = new CountDownLatch(2);
+		
+		final Integer beerId = 1;
+		final String UPDATED_BEER_NAME = "UpdatedBeer";
+    	BeerDto updatedBeerDto = BeerDto.builder()
+    			.beerName(UPDATED_BEER_NAME)
+    			.upc("1234555")
+    			.beerStyle("PALE_ALE")
+    			.price(new BigDecimal("12.99"))
+    			.build();	
+		
+		Mono<ResponseEntity<Void>> beerResponseMono = webClient.put().uri(BeerRouterConfig.BEER_V2_URL + "/" + beerId)
+				.accept(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromValue(updatedBeerDto))
+				.retrieve()
+				.toBodilessEntity();
+		
+		beerResponseMono.subscribe(responseEntity -> {
+			assertThat(responseEntity.getStatusCode().is2xxSuccessful());
+			countDownLatch.countDown();
+		});
+		
+		countDownLatch.await(500, TimeUnit.MILLISECONDS); //wait for the update request to process
+				
+		webClient.get().uri(BeerRouterConfig.BEER_V2_URL + "/" + beerId)
+			.accept(MediaType.APPLICATION_JSON)
+			.retrieve()
+			.bodyToMono(BeerDto.class)
+			.subscribe( beerDto -> {
+				assertThat(beerDto).isNotNull();
+				assertThat(beerDto.getBeerName()).isNotNull();
+				assertThat(beerDto.getBeerName()).isEqualTo(UPDATED_BEER_NAME);
+				countDownLatch.countDown();
+			});
+		assertCountDown();
+	}
+	
+	
+	@Test
+	void updateBeerNotFound() throws InterruptedException {
+		countDownLatch = new CountDownLatch(1);
+		
+		final Integer beerId = -111;
+		final String UPDATED_BEER_NAME = "UpdatedBeer";
+    	BeerDto updatedBeerDto = BeerDto.builder()
+    			.beerName(UPDATED_BEER_NAME)
+    			.upc("1234555")
+    			.beerStyle("PALE_ALE")
+    			.price(new BigDecimal("12.99"))
+    			.build();	
+		
+		Mono<ResponseEntity<Void>> beerResponseMono = webClient.put().uri(BeerRouterConfig.BEER_V2_URL + "/" + beerId)
+				.accept(MediaType.APPLICATION_JSON)
+				.body(BodyInserters.fromValue(updatedBeerDto))
+				.retrieve()
+				.toBodilessEntity();
+		
+		beerResponseMono.subscribe(responseEntity -> {
+			assertThat(responseEntity.getStatusCode().is2xxSuccessful());
+			
+		}, throwable -> {
+			countDownLatch.countDown();
+		});
+		
+		assertCountDown();
+	}
+	
+	
+	
+	
 	private void assertCountDown() throws InterruptedException{
 		countDownLatch.await(1000, TimeUnit.MILLISECONDS);
 		assertThat(countDownLatch.getCount()).isEqualTo(0);
