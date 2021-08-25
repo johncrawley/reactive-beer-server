@@ -1,6 +1,7 @@
 package guru.springframework.sfgrestbrewery.web.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
@@ -233,6 +234,36 @@ public class WebClientV2IT {
 	}
 	
 	
+	@Test
+	void deleteBeer() throws InterruptedException {
+		countDownLatch = new CountDownLatch(1);
+		int beerId = 1;
+		webClient.delete().uri(BeerRouterConfig.BEER_V2_URL + "/" + beerId)
+		.retrieve()
+		.toBodilessEntity()
+		.flatMap(responseEntity -> {
+			countDownLatch.countDown();
+			return webClient.get().uri(BeerRouterConfig.BEER_V2_URL + "/" + beerId)
+					.retrieve()
+					.bodyToMono(BeerDto.class); })
+		.subscribe(beerDto-> {}, throwable -> {
+			countDownLatch.countDown();
+		});
+		assertCountDown();
+	}
+	
+	
+	@Test
+	void deleteBeerNotFound() {
+
+		int badId = -100;
+				
+		assertThrows(WebClientResponseException.NotFound.class, () -> {
+			webClient.delete().uri(BeerRouterConfig.BEER_V2_URL + "/" + badId)
+			.retrieve()
+			.toBodilessEntity().block();
+		});
+	}
 	
 	
 	private void assertCountDown() throws InterruptedException{
